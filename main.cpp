@@ -91,6 +91,8 @@ void loop()
   {
     float m0_pos = bus.Get(0).Position(); // Get the shaft position of motor 0 in radians.
     float m0_vel = bus.Get(0).Velocity(); // Get the shaft velocity of motor 0 in radians/sec.
+    float m3_pos = bus.Get(3).Position(); // Get the shaft position of motor 0 in radians.
+    float m3_vel = bus.Get(3).Velocity(); // Get the shaft velocity of motor 0 in radians/sec.
     Serial.print("m0_pos: ");
     Serial.print(m0_pos);
     Serial.print("\tm0_vel: ");
@@ -126,6 +128,10 @@ void loop()
     float m1_vel = bus.Get(1).Velocity();
     float m2_pos = bus.Get(2).Position();
     float m2_vel = bus.Get(2).Velocity();
+    float m4_pos = bus.Get(4).Position();
+    float m4_vel = bus.Get(4).Velocity();
+    float m5_pos = bus.Get(5).Position();
+    float m5_vel = bus.Get(5).Velocity();
     Serial.print("\tm1_pos: ");
     Serial.print(m1_pos);
     Serial.print("\tm1_vel: ");
@@ -139,19 +145,23 @@ void loop()
     m1_current = pd_control(m1_pos, m1_vel, target_position, Kp, Kd);
     m2_current = pd_control(m2_pos, m2_vel, target_position, Kp, Kd);
 
-    m3_current = pd_control(m0_pos, m0_vel, target_position, Kp, Kd);
-    m4_current = pd_control(m1_pos, m1_vel, target_position, Kp, Kd);
-    m5_current = pd_control(m2_pos, m2_vel, target_position, Kp, Kd);
+    m3_current = pd_control(m3_pos, m3_vel, target_position, Kp, Kd);
+    m4_current = pd_control(m4_pos, m4_vel, target_position, Kp, Kd);
+    m5_current = pd_control(m5_pos, m5_vel, target_position, Kp, Kd);
 
 
     // Sanitizes your computed current commands to make the robot safer.
     sanitize_current_command(m0_current, m0_pos, m0_vel);
     sanitize_current_command(m1_current, m1_pos, m1_vel);
     sanitize_current_command(m2_current, m2_pos, m2_vel);
+    sanitize_current_command(m3_current, m3_pos, m3_vel);
+    sanitize_current_command(m4_current, m4_pos, m4_vel);
+    sanitize_current_command(m5_current, m5_pos, m5_vel);
    
     // Only call CommandTorques once per loop! Calling it multiple times will override the last command.
-    //bus.CommandTorques(m0_current, m1_current, m2_current, 0, C610Subbus::kIDZeroToThree);
-    bus.CommandTorques(m3_current, 0, 0, 0, C610Subbus::kIDFourToSeven);
+    bus.CommandTorques(m0_current, m1_current, m2_current, m3_current, C610Subbus::kIDZeroToThree);
+    bus.CommandTorques(m4_current, m5_current, 0, 0, C610Subbus::kIDFourToSeven);
+    //bus.CommandTorques(0, 0, m2_current, 0, C610Subbus::kIDFourToSeven);
     // Once you motors with ID=4 to 7, use this command
     //bus.CommandTorques(m3_current, m4_current, m5_current, 0, C610Subbus::kIDFourToSeven);
 
