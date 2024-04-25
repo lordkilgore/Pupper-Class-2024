@@ -15,7 +15,7 @@ float pd_control(float pos,
                  float vel,
                  float target,
                  float Kp=1000.0f,
-                 float Kd=100.0f)
+                 float Kd=0.0f)
 {
   return Kp * (target - pos) + Kd * (-vel); // YOUR CODE HERE
 }
@@ -79,6 +79,7 @@ void loop()
     if (Serial.read() == 's')
     {
       bus.CommandTorques(0, 0, 0, 0, C610Subbus::kIDZeroToThree);
+      bus.CommandTorques(0, 0, 0, 0, C610Subbus::kIDFourToSeven);
       Serial.println("Stopping.");
       while (true)
       {
@@ -98,17 +99,19 @@ void loop()
     float m0_current = 0.0;
     float m1_current = 0.0;
     float m2_current = 0.0;
+    float m3_current = 0.0;
+    float m4_current = 0.0;
+    float m5_current = 0.0;
 
 
     // Step 8. Change the target position to something periodic
     float time = millis() / 1000.0; // millis() returns the time in milliseconds since start of program
 
     // Step 5. Your PD controller is run here.
-    float Kp = 1000.0;
-    float Kd = 0;
+    float Kp = 4000.0;
+    float Kd = 1000.0;
     float target_position = sin(time); // modify in step 8
-    m0_current = pd_control(m0_pos, m0_vel, target_position, Kp, Kd);
-
+    
     //Step 4. Uncomment for bang-bang control. Comment out again before Step 5.
     // if(m0_pos < 0) {
     //   m0_current = 800;
@@ -131,17 +134,26 @@ void loop()
     Serial.print(m2_pos);
     Serial.print("\tm2_vel: ");
     Serial.print(m2_vel);
-    // m1_current = YOUR PID CODE
-    // m2_current = YOUR PID CODE
+
+    m0_current = pd_control(m0_pos, m0_vel, target_position, Kp, Kd);
+    m1_current = pd_control(m1_pos, m1_vel, target_position, Kp, Kd);
+    m2_current = pd_control(m2_pos, m2_vel, target_position, Kp, Kd);
+
+    m3_current = pd_control(m0_pos, m0_vel, target_position, Kp, Kd);
+    m4_current = pd_control(m1_pos, m1_vel, target_position, Kp, Kd);
+    m5_current = pd_control(m2_pos, m2_vel, target_position, Kp, Kd);
+
 
     // Sanitizes your computed current commands to make the robot safer.
     sanitize_current_command(m0_current, m0_pos, m0_vel);
     sanitize_current_command(m1_current, m1_pos, m1_vel);
     sanitize_current_command(m2_current, m2_pos, m2_vel);
+   
     // Only call CommandTorques once per loop! Calling it multiple times will override the last command.
-    bus.CommandTorques(m0_current, m1_current, m2_current, 0, C610Subbus::kIDZeroToThree);
+    //bus.CommandTorques(m0_current, m1_current, m2_current, 0, C610Subbus::kIDZeroToThree);
+    bus.CommandTorques(m3_current, 0, 0, 0, C610Subbus::kIDFourToSeven);
     // Once you motors with ID=4 to 7, use this command
-    // bus.CommandTorques(0, 0, 0, 0, C610Subbus::kIDFourToSeven);
+    //bus.CommandTorques(m3_current, m4_current, m5_current, 0, C610Subbus::kIDFourToSeven);
 
     last_command = now;
     Serial.println();
